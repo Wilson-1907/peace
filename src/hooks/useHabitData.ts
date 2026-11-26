@@ -7,6 +7,7 @@ import {
   DEMO_PEACE_ID,
   DEMO_WILSON_ID,
   archiveDemoHabit,
+  clearDemoCompletions,
   createDemoHabit,
   loadDemoState,
   reorderDemoHabits,
@@ -28,6 +29,7 @@ export interface HabitDataApi {
   createHabit: (name: string, assigned_to: AssignedTo) => Promise<void>;
   archiveHabit: (habitId: string) => Promise<void>;
   reorderHabits: (orderedIds: string[]) => Promise<void>;
+  cleanCompletions: () => Promise<void>;
   refresh: () => Promise<void>;
 }
 
@@ -296,6 +298,24 @@ export function useHabitData(): HabitDataApi {
     [demoMode, demo, refresh]
   );
 
+  const cleanCompletions = useCallback(async () => {
+    if (demoMode && demo) {
+      const next = clearDemoCompletions(demo);
+      setDemo(next);
+      setCompletions(next.completions);
+      return;
+    }
+
+    const supabase = createClient();
+    if (!supabase || !currentUserId) return;
+
+    // Delete own + readable partner completions the client can see
+    const ids = completions.map((c) => c.id);
+    if (ids.length === 0) return;
+    await supabase.from("completions").delete().in("id", ids);
+    await refresh();
+  }, [demoMode, demo, currentUserId, completions, refresh]);
+
   return {
     ready,
     demoMode,
@@ -309,6 +329,7 @@ export function useHabitData(): HabitDataApi {
     createHabit,
     archiveHabit,
     reorderHabits,
+    cleanCompletions,
     refresh,
   };
 }

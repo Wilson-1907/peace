@@ -22,6 +22,7 @@ import { Footer } from "./Footer";
 import { CompareStrip } from "./CompareStrip";
 import { PhotoBackdrop } from "./PhotoBackdrop";
 import { WeekPicker } from "./WeekPicker";
+import { CleanModal } from "./CleanModal";
 import { generatePeriodInsight } from "@/lib/remarks";
 
 type MobileTab = "peace" | "wilson" | "both";
@@ -32,6 +33,7 @@ export function Dashboard() {
   const [session, setSession] = useState<AuthSession | null>(null);
   const [authChecked, setAuthChecked] = useState(false);
   const [managerOpen, setManagerOpen] = useState(false);
+  const [cleanOpen, setCleanOpen] = useState(false);
   const [mobileTab, setMobileTab] = useState<MobileTab>("both");
 
   const weeks = useMemo(() => buildYearWeeks(new Date()), []);
@@ -191,6 +193,7 @@ export function Dashboard() {
             setWeekIndex((i) => Math.min(weeks.length - 1, i + 1))
           }
           onManageHabits={() => setManagerOpen(true)}
+          onClean={() => setCleanOpen(true)}
           onSignOut={data.demoMode ? signOut : undefined}
         />
 
@@ -303,6 +306,14 @@ export function Dashboard() {
             onReorder={data.reorderHabits}
           />
         )}
+
+        <CleanModal
+          open={cleanOpen}
+          onClose={() => setCleanOpen(false)}
+          onConfirm={() => {
+            void data.cleanCompletions();
+          }}
+        />
 
         <Footer />
       </div>

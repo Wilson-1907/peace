@@ -13,6 +13,7 @@ interface HeaderProps {
   onPrevWeek: () => void;
   onNextWeek: () => void;
   onManageHabits: () => void;
+  onClean: () => void;
   onSignOut?: () => void;
 }
 
@@ -26,6 +27,7 @@ export function Header({
   onPrevWeek,
   onNextWeek,
   onManageHabits,
+  onClean,
   onSignOut,
 }: HeaderProps) {
   return (
@@ -74,6 +76,14 @@ export function Header({
               className="rounded-xl bg-white/95 px-3.5 py-2 text-sm font-semibold text-blue-800 shadow-sm transition hover:bg-white"
             >
               Manage habits
+            </button>
+            <button
+              type="button"
+              onClick={onClean}
+              className="rounded-xl border border-rose-200/80 bg-rose-500/90 px-3.5 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-rose-600"
+              title="Clean tracking — requires Wilson PIN willy1"
+            >
+              Clean
             </button>
             {onSignOut && (
               <button

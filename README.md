@@ -25,7 +25,8 @@ npm run dev
 Open [http://localhost:3000/login](http://localhost:3000/login)
 
 - Sign in as **Peace** with PIN `peace`
-- Sign in as **Wilson** with PIN `wilson`
+- Sign in as **Wilson** with PIN `willy1`
+- **Clean** button clears all checkmarks — confirm with `willy1` (Wilson)
 
 Change PINs via `.env.local` (see `.env.example`).
 

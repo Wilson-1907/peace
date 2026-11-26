@@ -165,9 +165,9 @@ export default function LoginPage() {
               </label>
 
               <p className="text-center text-[11px] text-slate-400">
-                Default PINs: Peace → <code className="text-blue-600">peace</code>
+                PINs: Peace → <code className="text-blue-600">peace</code>
                 {" · "}
-                Wilson → <code className="text-blue-600">wilson</code>
+                Wilson → <code className="text-blue-600">willy1</code>
               </p>
             </>
           )}

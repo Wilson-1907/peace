@@ -4,7 +4,7 @@
  */
 import type { AssignedTo, Completion, Habit, Profile } from "./types";
 
-const STORAGE_KEY = "pw-habits-demo-v2";
+const STORAGE_KEY = "pw-habits-demo-v3";
 
 export const DEMO_PEACE_ID = "00000000-0000-4000-8000-000000000001";
 export const DEMO_WILSON_ID = "00000000-0000-4000-8000-000000000002";
@@ -190,6 +190,21 @@ export function reorderDemoHabits(
   };
   saveDemoState(next);
   return next;
+}
+
+/** Wipe all completion marks; keep habits + profiles. */
+export function clearDemoCompletions(state: DemoState): DemoState {
+  const next: DemoState = { ...state, completions: [] };
+  saveDemoState(next);
+  return next;
+}
+
+/** Full reset to seed habits with empty tracking. */
+export function resetDemoTracking(state: DemoState): DemoState {
+  const fresh = seed();
+  fresh.currentUserId = state.currentUserId;
+  saveDemoState(fresh);
+  return fresh;
 }
 
 export function toggleDemoCompletion(

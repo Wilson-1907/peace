@@ -28,9 +28,20 @@ export const PEOPLE = {
     name: "Wilson",
     userId: DEMO_WILSON_ID,
     photo: "/wilson.jpg",
-    defaultPin: "wilson",
+    defaultPin: "willy1",
   },
 } as const;
+
+/** PIN required to run Clean — assigned to Wilson (Willy). */
+export const CLEAN_ACTION_PIN = "willy1";
+
+export function verifyCleanPin(pin: string): boolean {
+  const expected =
+    process.env.NEXT_PUBLIC_CLEAN_PIN?.trim() ||
+    process.env.NEXT_PUBLIC_WILSON_PIN?.trim() ||
+    CLEAN_ACTION_PIN;
+  return pin.trim() === expected;
+}
 
 export function getExpectedPin(person: PersonKey): string {
   if (person === "peace") {
