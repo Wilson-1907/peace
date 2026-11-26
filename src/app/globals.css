@@ -11,8 +11,13 @@
 
 html,
 body {
-  background: #0c2d6b;
+  background: transparent;
   min-height: 100%;
+}
+
+/* Fallback tint only if the photo has not painted yet */
+html {
+  background-color: #1e3a5f;
 }
 
 .font-display {

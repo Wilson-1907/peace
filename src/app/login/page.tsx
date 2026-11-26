@@ -75,7 +75,7 @@ export default function LoginPage() {
 
   return (
     <div className="relative flex min-h-screen flex-col">
-      <PhotoBackdrop dim="heavy" />
+      <PhotoBackdrop dim="medium" />
 
       <main className="relative z-10 flex flex-1 items-center justify-center px-4 py-10">
         <form

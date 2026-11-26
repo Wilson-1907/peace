@@ -23,7 +23,7 @@ export function Header({
   onSignOut,
 }: HeaderProps) {
   return (
-    <header className="relative border-b border-white/15 bg-white/10 backdrop-blur-md">
+    <header className="relative border-b border-white/20 bg-white/15 backdrop-blur-sm">
       <div className="relative mx-auto flex max-w-7xl flex-col gap-5 px-4 py-5 sm:px-6 lg:px-8">
         <div className="flex items-start justify-between gap-4">
           <div className="flex items-center gap-4">

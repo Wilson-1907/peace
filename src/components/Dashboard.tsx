@@ -111,8 +111,8 @@ export function Dashboard() {
   if (!data.ready || !authChecked) {
     return (
       <div className="relative flex min-h-screen items-center justify-center text-white">
-        <PhotoBackdrop dim="medium" />
-        <p className="relative z-10">Loading Peace &amp; Wilson…</p>
+        <PhotoBackdrop dim="light" />
+        <p className="relative z-10 drop-shadow">Loading Peace &amp; Wilson…</p>
       </div>
     );
   }
@@ -121,8 +121,9 @@ export function Dashboard() {
 
   return (
     <div className="relative min-h-screen">
-      <PhotoBackdrop dim="medium" />
+      <PhotoBackdrop dim="light" />
 
+      <div className="relative z-10">
       <Header
         demoMode={data.demoMode}
         monthLabel={monthLabel}
@@ -238,6 +239,7 @@ export function Dashboard() {
       )}
 
       <Footer />
+      </div>
     </div>
   );
 }
