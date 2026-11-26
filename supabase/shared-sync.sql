@@ -48,6 +48,30 @@ create policy "shared_completions_select_all"
   on public.shared_completions for select
   using (true);
 
+-- Writes via publishable key (API routes). Optional: set SUPABASE_SERVICE_ROLE_KEY later.
+grant select, insert, update, delete on public.shared_habits to anon, authenticated, service_role;
+grant select, insert, update, delete on public.shared_completions to anon, authenticated, service_role;
+
+drop policy if exists "shared_habits_insert" on public.shared_habits;
+create policy "shared_habits_insert"
+  on public.shared_habits for insert to anon, authenticated with check (true);
+drop policy if exists "shared_habits_update" on public.shared_habits;
+create policy "shared_habits_update"
+  on public.shared_habits for update to anon, authenticated using (true) with check (true);
+drop policy if exists "shared_habits_delete" on public.shared_habits;
+create policy "shared_habits_delete"
+  on public.shared_habits for delete to anon, authenticated using (true);
+
+drop policy if exists "shared_completions_insert" on public.shared_completions;
+create policy "shared_completions_insert"
+  on public.shared_completions for insert to anon, authenticated with check (true);
+drop policy if exists "shared_completions_update" on public.shared_completions;
+create policy "shared_completions_update"
+  on public.shared_completions for update to anon, authenticated using (true) with check (true);
+drop policy if exists "shared_completions_delete" on public.shared_completions;
+create policy "shared_completions_delete"
+  on public.shared_completions for delete to anon, authenticated using (true);
+
 -- Realtime (also toggle in Dashboard → Database → Replication if needed)
 do $$
 begin

@@ -8,7 +8,7 @@ export async function GET() {
     return NextResponse.json(
       {
         error:
-          "Shared sync is not configured. Add NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY on Vercel.",
+          "Shared sync is not configured. Add NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY on Vercel.",
       },
       { status: 503 }
     );
