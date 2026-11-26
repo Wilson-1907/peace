@@ -135,13 +135,15 @@ export function useHabitData(): HabitDataApi {
   const setCurrentUserIdWrapped = useCallback(
     (id: string) => {
       setCurrentUserId(id);
-      if (demoMode && demo) {
-        const next = { ...demo, currentUserId: id };
+      if (!demoMode) return;
+      setDemo((prev) => {
+        const base = prev ?? loadDemoState();
+        const next = { ...base, currentUserId: id };
         saveDemoState(next);
-        setDemo(next);
-      }
+        return next;
+      });
     },
-    [demoMode, demo]
+    [demoMode]
   );
 
   const toggleCompletion = useCallback(
@@ -151,16 +153,18 @@ export function useHabitData(): HabitDataApi {
       const localToday = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
       if (date !== localToday) return;
 
-      if (demoMode && demo) {
-        // Enforce ownership in demo too
-        if (userId !== demo.currentUserId) return;
-        const next = toggleDemoCompletion(demo, habitId, userId, date);
-        setDemo(next);
-        setCompletions(next.completions);
+      if (userId !== currentUserId) return; // hard block partner edits
+
+      if (demoMode) {
+        setDemo((prev) => {
+          const base = prev ?? loadDemoState();
+          const synced = { ...base, currentUserId };
+          const next = toggleDemoCompletion(synced, habitId, userId, date);
+          setCompletions(next.completions);
+          return next;
+        });
         return;
       }
-
-      if (userId !== currentUserId) return; // hard block partner edits
 
       const supabase = createClient();
       if (!supabase) return;
@@ -213,48 +217,63 @@ export function useHabitData(): HabitDataApi {
         setCompletions(previous);
       }
     },
-    [demoMode, demo, currentUserId, completions, refresh]
+    [demoMode, currentUserId, completions, refresh]
   );
 
   const createHabit = useCallback(
     async (name: string, assigned_to: AssignedTo) => {
-      if (demoMode && demo) {
-        const next = createDemoHabit(demo, {
-          name,
-          assigned_to,
-          user_id: demo.currentUserId,
+      const trimmed = name.trim();
+      if (!trimmed) throw new Error("Enter a habit name");
+      if (!currentUserId) throw new Error("Not signed in");
+
+      if (demoMode) {
+        setDemo((prev) => {
+          const base = prev ?? loadDemoState();
+          const synced = { ...base, currentUserId };
+          const next = createDemoHabit(synced, {
+            name: trimmed,
+            assigned_to,
+            user_id: currentUserId,
+          });
+          setHabits(next.habits);
+          return next;
         });
-        setDemo(next);
-        setHabits(next.habits);
         return;
       }
 
       const supabase = createClient();
-      if (!supabase || !currentUserId) return;
+      if (!supabase) throw new Error("Storage unavailable");
 
       const maxOrder = habits
         .filter((h) => h.user_id === currentUserId && h.is_active)
         .reduce((m, h) => Math.max(m, h.sort_order), -1);
 
-      await supabase.from("habits").insert({
+      const { error } = await supabase.from("habits").insert({
         user_id: currentUserId,
-        name: name.trim(),
+        name: trimmed,
         assigned_to,
         sort_order: maxOrder + 1,
       });
+      if (error) throw new Error(error.message);
       await refresh();
     },
-    [demoMode, demo, currentUserId, habits, refresh]
+    [demoMode, currentUserId, habits, refresh]
   );
 
   const archiveHabit = useCallback(
     async (habitId: string) => {
-      if (demoMode && demo) {
-        const habit = demo.habits.find((h) => h.id === habitId);
-        if (!habit || habit.user_id !== demo.currentUserId) return;
-        const next = archiveDemoHabit(demo, habitId);
-        setDemo(next);
-        setHabits(next.habits);
+      if (demoMode) {
+        setDemo((prev) => {
+          const base = prev ?? loadDemoState();
+          const habit = base.habits.find((h) => h.id === habitId);
+          if (!habit || habit.user_id !== currentUserId) return base;
+          const next = archiveDemoHabit(
+            { ...base, currentUserId },
+            habitId
+          );
+          setHabits(next.habits);
+          return next;
+        });
         return;
       }
 
@@ -273,15 +292,18 @@ export function useHabitData(): HabitDataApi {
         .eq("id", habitId);
       await refresh();
     },
-    [demoMode, demo, habits, currentUserId, refresh]
+    [demoMode, habits, currentUserId, refresh]
   );
 
   const reorderHabits = useCallback(
     async (orderedIds: string[]) => {
-      if (demoMode && demo) {
-        const next = reorderDemoHabits(demo, orderedIds);
-        setDemo(next);
-        setHabits(next.habits);
+      if (demoMode) {
+        setDemo((prev) => {
+          const base = prev ?? loadDemoState();
+          const next = reorderDemoHabits(base, orderedIds);
+          setHabits(next.habits);
+          return next;
+        });
         return;
       }
 
@@ -295,26 +317,28 @@ export function useHabitData(): HabitDataApi {
       );
       await refresh();
     },
-    [demoMode, demo, refresh]
+    [demoMode, refresh]
   );
 
   const cleanCompletions = useCallback(async () => {
-    if (demoMode && demo) {
-      const next = clearDemoCompletions(demo);
-      setDemo(next);
-      setCompletions(next.completions);
+    if (demoMode) {
+      setDemo((prev) => {
+        const base = prev ?? loadDemoState();
+        const next = clearDemoCompletions(base);
+        setCompletions(next.completions);
+        return next;
+      });
       return;
     }
 
     const supabase = createClient();
     if (!supabase || !currentUserId) return;
 
-    // Delete own + readable partner completions the client can see
     const ids = completions.map((c) => c.id);
     if (ids.length === 0) return;
     await supabase.from("completions").delete().in("id", ids);
     await refresh();
-  }, [demoMode, demo, currentUserId, completions, refresh]);
+  }, [demoMode, currentUserId, completions, refresh]);
 
   return {
     ready,
