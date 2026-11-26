@@ -1,6 +1,6 @@
-# Peace & Wilson · Habit Tracker
+# Peace & Wilson · Daily Tracking System
 
-Dual-pane habit tracker for **Peace** and **Wilson** — shared visibility, strict write isolation, full-bleed couple photos, Made by [Querido❤️](https://kinyanjuiwilson.vercel.app).
+Day-by-day habit **tracking system** for **Peace** and **Wilson** — mark today only, build month history, compare live. Shared visibility, strict write isolation, full-bleed couple photos. Made by [Querido❤️](https://kinyanjuiwilson.vercel.app).
 
 ## Can Vercel host this for free?
 
@@ -42,11 +42,13 @@ Set optional env vars in the Vercel project:
 
 ## Features
 
-- Full-page couple photo backdrop (not hero-only)
-- Dual grids + live compare strip
+- **Today’s tracking** — big day-by-day checklist (only today is markable)
+- Month history grid (past locked, future locked)
+- Dual panes + live compare for Peace & Wilson
 - Habit manager (Me / Partner / Both)
 - Scoring + remarks engines
-- Partner grids are view-only
+- Partner panes are view-only
+- Full-page couple photo backdrop
 
 ## Optional Supabase
 

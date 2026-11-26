@@ -66,7 +66,7 @@ export function CompareStrip({
       <div className="overflow-hidden rounded-2xl border border-blue-100 bg-white shadow-sm">
         <div className="flex items-center justify-between gap-3 px-4 pt-3">
           <p className="text-[10px] font-semibold uppercase tracking-wider text-blue-400">
-            Live compare · today
+            Live tracking · today
           </p>
           <p className="text-xs font-medium text-slate-500">
             {lead === "tie" && "Neck and neck"}

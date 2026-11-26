@@ -15,12 +15,12 @@ const sans = DM_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "Peace & Wilson · Habit Tracker",
+  title: "Peace & Wilson · Daily Tracking System",
   description:
-    "A dual-pane habit tracker for Peace and Wilson — shared visibility, strict ownership.",
+    "Day-by-day habit tracking for Peace and Wilson — mark today, build history, compare together.",
   openGraph: {
-    title: "Peace & Wilson · Habit Tracker",
-    description: "Track habits together. Own your checkmarks.",
+    title: "Peace & Wilson · Daily Tracking System",
+    description: "Track one day at a time. Own your checkmarks.",
     images: ["/couple.jpg"],
   },
 };

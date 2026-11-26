@@ -55,8 +55,8 @@ export function Header({
                 Peace &amp; Wilson
               </p>
               <p className="text-sm text-blue-100/90">
-                Habit tracker · {format(new Date(), "EEEE, MMM d")}
-                {signedInAs ? ` · signed in as ${signedInAs}` : ""}
+                Daily tracking system · {format(new Date(), "EEEE, MMM d")}
+                {signedInAs ? ` · ${signedInAs}` : ""}
               </p>
             </div>
           </div>

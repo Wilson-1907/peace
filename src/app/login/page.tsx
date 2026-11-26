@@ -106,10 +106,13 @@ export default function LoginPage() {
             <h1 className="font-display text-2xl font-semibold text-blue-950">
               Peace &amp; Wilson
             </h1>
+            <p className="mt-1 text-sm font-medium text-blue-700">
+              Daily tracking system
+            </p>
             <p className="mt-1 text-sm text-slate-500">
               {supabaseMode
                 ? "Sign in with your account"
-                : "Choose who you are, then enter your PIN"}
+                : "Choose who you are, enter your PIN, then track today"}
             </p>
           </div>
 

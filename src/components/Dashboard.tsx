@@ -135,8 +135,9 @@ export function Dashboard() {
 
       <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 px-4 py-4 sm:px-6 lg:px-8">
         <div className="rounded-xl bg-white/90 px-3 py-2 text-sm text-blue-900 shadow-sm backdrop-blur">
-          You can <span className="font-semibold">edit your own</span> grid ·
-          partner is <span className="font-semibold">view only</span>
+          <span className="font-semibold">Tracking:</span> mark today only ·
+          your habits editable · partner{" "}
+          <span className="font-semibold">view only</span>
         </div>
 
         <div className="flex rounded-xl bg-white/90 p-1 shadow-sm backdrop-blur lg:hidden">

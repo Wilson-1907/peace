@@ -11,6 +11,7 @@ import type {
 } from "@/lib/types";
 import { HabitGrid } from "./HabitGrid";
 import { RemarksPanel } from "./RemarksPanel";
+import { TodayTrack } from "./TodayTrack";
 
 interface UserPaneProps {
   profile: Profile;
@@ -96,9 +97,23 @@ export function UserPane({
             {todayScore ? `${todayScore.percentage}%` : "—"}
           </p>
           <p className="text-[10px] uppercase tracking-wider text-blue-400">
-            Today
+            Tracked today
           </p>
         </div>
+      </div>
+
+      <TodayTrack
+        habits={habits}
+        completions={completions}
+        userId={profile.id}
+        readOnly={readOnly}
+        onToggle={onToggle}
+      />
+
+      <div className="border-b border-blue-50 px-3 pt-3">
+        <p className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-blue-400">
+          Month history · today only is editable
+        </p>
       </div>
 
       <HabitGrid
