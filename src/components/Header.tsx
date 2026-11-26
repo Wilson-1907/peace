@@ -125,11 +125,11 @@ export function Header({
             </button>
           </div>
 
-          {demoMode && (
-            <span className="rounded-full bg-white/90 px-3 py-1 text-xs font-medium text-blue-900">
-              Saved on this device · weeks through Dec {new Date().getFullYear()}
-            </span>
-          )}
+          <span className="rounded-full bg-white/90 px-3 py-1 text-xs font-medium text-blue-900">
+            {demoMode
+              ? "This device only — add Supabase on Vercel for shared sync"
+              : `Shared sync · all devices · through Dec ${new Date().getFullYear()}`}
+          </span>
         </div>
       </div>
     </header>

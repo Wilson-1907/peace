@@ -1,59 +1,55 @@
 # Peace & Wilson · Daily Tracking System
 
-Day-by-day habit **tracking system** for **Peace** and **Wilson** — mark today only, build month history, compare live. Shared visibility, strict write isolation, full-bleed couple photos. Made by [Querido❤️](https://kinyanjuiwilson.vercel.app).
+Day-by-day habit tracking for **Peace** and **Wilson** — mark today only, week-by-week through year end, shared on **every device**.
 
-## Can Vercel host this for free?
+Made by [Querido❤️](https://kinyanjuiwilson.vercel.app)
 
-**Yes.** Default mode is **full frontend** (no paid backend):
+## Shared sync (not per-device)
 
-| Piece | Free option |
-|-------|-------------|
-| Hosting | **Vercel Hobby** (Next.js) |
-| Login | Small **PIN** per person (`peace` / `wilson`) |
-| Data | **localStorage** on each device |
-| Photos / UI | Static files in `/public` |
+Without Supabase, data stays in the browser (one device only).
 
-Optional later: add a free **Supabase** project for live sync across phones. Until then, no backend keys are required.
+With a **free Supabase** project + Vercel env vars, habits and checkmarks sync for Peace and Wilson on all phones/laptops.
 
-## Quick start
+### 1. Create free Supabase
+
+1. [supabase.com](https://supabase.com) → New project  
+2. SQL Editor → paste & run `supabase/shared-sync.sql`  
+3. Project Settings → API → copy **URL**, **anon key**, **service_role key**
+
+### 2. Add env on Vercel
+
+| Name | Value |
+|------|--------|
+| `NEXT_PUBLIC_SUPABASE_URL` | project URL |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | anon / public key |
+| `SUPABASE_SERVICE_ROLE_KEY` | service_role key (secret) |
+| `NEXT_PUBLIC_PEACE_PIN` | `peace` |
+| `NEXT_PUBLIC_WILSON_PIN` | `willy1` |
+| `NEXT_PUBLIC_CLEAN_PIN` | `willy1` |
+
+Redeploy after saving env vars.
+
+### 3. Login
+
+- **Peace** → PIN `peace`  
+- **Wilson** → PIN `willy1`  
+- **Clean** (clears all checkmarks everywhere) → confirm with `willy1`
+
+## Local run
 
 ```bash
 npm install
+cp .env.example .env.local   # fill Supabase keys for shared sync
 npm run dev
 ```
 
-Open [http://localhost:3000/login](http://localhost:3000/login)
-
-- Sign in as **Peace** with PIN `peace`
-- Sign in as **Wilson** with PIN `willy1`
-- **Clean** button clears all checkmarks — confirm with `willy1` (Wilson)
-
-Change PINs via `.env.local` (see `.env.example`).
-
-## Deploy on Vercel (free)
-
-```bash
-npx vercel
-```
-
-Set optional env vars in the Vercel project:
-
-- `NEXT_PUBLIC_PEACE_PIN`
-- `NEXT_PUBLIC_WILSON_PIN`
+Repo: [github.com/Wilson-1907/peace](https://github.com/Wilson-1907/peace)
 
 ## Features
 
-- **Today’s tracking** — big day-by-day checklist (only today is markable)
-- Month history grid (past locked, future locked)
-- Dual panes + live compare for Peace & Wilson
-- Habit manager (Me / Partner / Both)
-- Scoring + remarks engines
-- Partner panes are view-only
-- Full-page couple photo backdrop
-
-## Optional Supabase
-
-1. Create a project at [supabase.com](https://supabase.com)
-2. Run `supabase/migration.sql`
-3. Add `NEXT_PUBLIC_SUPABASE_URL` + `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-4. Link Peace ↔ Wilson as partners (SQL comments in the migration)
+- Shared cloud sync (API + Supabase)
+- Today’s tracking checklist
+- Exact dates, week-by-week through 31 Dec
+- Dual panes + live compare
+- Clean button gated by `willy1`
+- Full-bleed couple photos

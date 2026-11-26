@@ -2,7 +2,9 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { AssignedTo, Completion, Habit, Profile } from "@/lib/types";
-import { createClient, isSupabaseConfigured } from "@/lib/supabase/client";
+import { createClient } from "@/lib/supabase/client";
+import { isSharedSyncEnabled } from "@/lib/shared-mode";
+import { coupleProfiles } from "@/lib/couple-profiles";
 import {
   DEMO_PEACE_ID,
   DEMO_WILSON_ID,
@@ -18,7 +20,9 @@ import {
 
 export interface HabitDataApi {
   ready: boolean;
+  /** true = localStorage only (this device). false = shared cloud sync. */
   demoMode: boolean;
+  sharedMode: boolean;
   currentUser: Profile | null;
   partner: Profile | null;
   profiles: Profile[];
@@ -29,12 +33,13 @@ export interface HabitDataApi {
   createHabit: (name: string, assigned_to: AssignedTo) => Promise<void>;
   archiveHabit: (habitId: string) => Promise<void>;
   reorderHabits: (orderedIds: string[]) => Promise<void>;
-  cleanCompletions: () => Promise<void>;
+  cleanCompletions: (pin?: string) => Promise<void>;
   refresh: () => Promise<void>;
 }
 
 export function useHabitData(): HabitDataApi {
-  const demoMode = !isSupabaseConfigured();
+  const sharedMode = isSharedSyncEnabled();
+  const demoMode = !sharedMode;
   const [ready, setReady] = useState(false);
   const [demo, setDemo] = useState<DemoState | null>(null);
   const [profiles, setProfiles] = useState<Profile[]>([]);
@@ -54,38 +59,26 @@ export function useHabitData(): HabitDataApi {
       return;
     }
 
-    const supabase = createClient();
-    if (!supabase) return;
-
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    if (!user) {
+    // Shared cloud sync — every phone/laptop sees the same data
+    const res = await fetch("/api/sync", { cache: "no-store" });
+    if (!res.ok) {
+      const body = (await res.json().catch(() => ({}))) as { error?: string };
+      console.error(body.error ?? "Sync failed");
+      setProfiles(coupleProfiles());
+      setHabits([]);
+      setCompletions([]);
       setReady(true);
       return;
     }
 
-    setCurrentUserId(user.id);
-
-    const { data: me } = await supabase
-      .from("profiles")
-      .select("*")
-      .eq("id", user.id)
-      .single();
-
-    const partnerId = me?.partner_id as string | null;
-    const ids = [user.id, partnerId].filter(Boolean) as string[];
-
-    const [{ data: profs }, { data: habs }, { data: comps }] = await Promise.all([
-      supabase.from("profiles").select("*").in("id", ids),
-      supabase.from("habits").select("*").in("user_id", ids).order("sort_order"),
-      supabase.from("completions").select("*").in("user_id", ids),
-    ]);
-
-    setProfiles((profs as Profile[]) ?? []);
-    setHabits((habs as Habit[]) ?? []);
-    setCompletions((comps as Completion[]) ?? []);
+    const json = (await res.json()) as {
+      profiles: Profile[];
+      habits: Habit[];
+      completions: Completion[];
+    };
+    setProfiles(json.profiles?.length ? json.profiles : coupleProfiles());
+    setHabits(json.habits ?? []);
+    setCompletions(json.completions ?? []);
     setReady(true);
   }, [demoMode]);
 
@@ -93,30 +86,37 @@ export function useHabitData(): HabitDataApi {
     void refresh();
   }, [refresh]);
 
-  // Realtime subscriptions (Supabase only)
+  // Live updates across devices when shared sync is on
   useEffect(() => {
-    if (demoMode) return;
+    if (!sharedMode) return;
     const supabase = createClient();
-    if (!supabase) return;
+    if (!supabase) {
+      // Poll as fallback if anon client missing
+      const id = window.setInterval(() => void refresh(), 8000);
+      return () => window.clearInterval(id);
+    }
 
     const channel = supabase
-      .channel("habits-realtime")
+      .channel("shared-realtime")
       .on(
         "postgres_changes",
-        { event: "*", schema: "public", table: "habits" },
+        { event: "*", schema: "public", table: "shared_habits" },
         () => void refresh()
       )
       .on(
         "postgres_changes",
-        { event: "*", schema: "public", table: "completions" },
+        { event: "*", schema: "public", table: "shared_completions" },
         () => void refresh()
       )
       .subscribe();
 
+    const poll = window.setInterval(() => void refresh(), 15000);
+
     return () => {
+      window.clearInterval(poll);
       void supabase.removeChannel(channel);
     };
-  }, [demoMode, refresh]);
+  }, [sharedMode, refresh]);
 
   const currentUser = useMemo(
     () => profiles.find((p) => p.id === currentUserId) ?? null,
@@ -125,9 +125,7 @@ export function useHabitData(): HabitDataApi {
 
   const partner = useMemo(() => {
     if (!currentUser?.partner_id) {
-      // demo fallback
-      const other = profiles.find((p) => p.id !== currentUserId);
-      return other ?? null;
+      return profiles.find((p) => p.id !== currentUserId) ?? null;
     }
     return profiles.find((p) => p.id === currentUser.partner_id) ?? null;
   }, [profiles, currentUser, currentUserId]);
@@ -148,12 +146,10 @@ export function useHabitData(): HabitDataApi {
 
   const toggleCompletion = useCallback(
     async (habitId: string, userId: string, date: string) => {
-      // Day-by-day: only today's date can be marked (never Friday early, etc.)
       const now = new Date();
       const localToday = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
       if (date !== localToday) return;
-
-      if (userId !== currentUserId) return; // hard block partner edits
+      if (userId !== currentUserId) return;
 
       if (demoMode) {
         setDemo((prev) => {
@@ -166,53 +162,38 @@ export function useHabitData(): HabitDataApi {
         return;
       }
 
-      const supabase = createClient();
-      if (!supabase) return;
-
+      const previous = completions;
       const existing = completions.find(
         (c) =>
           c.habit_id === habitId && c.user_id === userId && c.date === date
       );
-
-      // Optimistic capture — UI + compare update in a split second
-      const previous = completions;
-      let optimistic: Completion[];
-      if (existing) {
-        optimistic = completions.map((c) =>
-          c.id === existing.id ? { ...c, completed: !c.completed } : c
-        );
-      } else {
-        optimistic = [
-          ...completions,
-          {
-            id: `optimistic-${habitId}-${date}`,
-            habit_id: habitId,
-            user_id: userId,
-            date,
-            completed: true,
-          },
-        ];
-      }
+      const optimistic: Completion[] = existing
+        ? completions.map((c) =>
+            c.id === existing.id ? { ...c, completed: !c.completed } : c
+          )
+        : [
+            ...completions,
+            {
+              id: `optimistic-${habitId}-${date}`,
+              habit_id: habitId,
+              user_id: userId,
+              date,
+              completed: true,
+            },
+          ];
       setCompletions(optimistic);
 
       try {
-        if (existing) {
-          const { error } = await supabase
-            .from("completions")
-            .update({ completed: !existing.completed })
-            .eq("id", existing.id);
-          if (error) throw error;
-        } else {
-          const { error } = await supabase.from("completions").insert({
-            habit_id: habitId,
-            user_id: userId,
-            date,
-            completed: true,
-          });
-          if (error) throw error;
+        const res = await fetch("/api/completions", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ habit_id: habitId, user_id: userId, date }),
+        });
+        if (!res.ok) {
+          const body = (await res.json().catch(() => ({}))) as { error?: string };
+          throw new Error(body.error ?? "Toggle failed");
         }
-        // Soft reconcile without blocking the compare flash
-        void refresh();
+        await refresh();
       } catch {
         setCompletions(previous);
       }
@@ -241,20 +222,25 @@ export function useHabitData(): HabitDataApi {
         return;
       }
 
-      const supabase = createClient();
-      if (!supabase) throw new Error("Storage unavailable");
-
       const maxOrder = habits
         .filter((h) => h.user_id === currentUserId && h.is_active)
         .reduce((m, h) => Math.max(m, h.sort_order), -1);
 
-      const { error } = await supabase.from("habits").insert({
-        user_id: currentUserId,
-        name: trimmed,
-        assigned_to,
-        sort_order: maxOrder + 1,
+      const res = await fetch("/api/habits", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          user_id: currentUserId,
+          name: trimmed,
+          assigned_to,
+          sort_order: maxOrder + 1,
+        }),
       });
-      if (error) throw new Error(error.message);
+      const body = (await res.json().catch(() => ({}))) as {
+        error?: string;
+        habit?: Habit;
+      };
+      if (!res.ok) throw new Error(body.error ?? "Could not add habit");
       await refresh();
     },
     [demoMode, currentUserId, habits, refresh]
@@ -267,10 +253,7 @@ export function useHabitData(): HabitDataApi {
           const base = prev ?? loadDemoState();
           const habit = base.habits.find((h) => h.id === habitId);
           if (!habit || habit.user_id !== currentUserId) return base;
-          const next = archiveDemoHabit(
-            { ...base, currentUserId },
-            habitId
-          );
+          const next = archiveDemoHabit({ ...base, currentUserId }, habitId);
           setHabits(next.habits);
           return next;
         });
@@ -280,16 +263,19 @@ export function useHabitData(): HabitDataApi {
       const habit = habits.find((h) => h.id === habitId);
       if (!habit || habit.user_id !== currentUserId) return;
 
-      const supabase = createClient();
-      if (!supabase) return;
-
-      await supabase
-        .from("habits")
-        .update({
+      const res = await fetch("/api/habits", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id: habitId,
           is_active: false,
           archived_at: new Date().toISOString(),
-        })
-        .eq("id", habitId);
+        }),
+      });
+      if (!res.ok) {
+        const body = (await res.json().catch(() => ({}))) as { error?: string };
+        throw new Error(body.error ?? "Archive failed");
+      }
       await refresh();
     },
     [demoMode, habits, currentUserId, refresh]
@@ -307,42 +293,52 @@ export function useHabitData(): HabitDataApi {
         return;
       }
 
-      const supabase = createClient();
-      if (!supabase) return;
-
-      await Promise.all(
-        orderedIds.map((id, index) =>
-          supabase.from("habits").update({ sort_order: index }).eq("id", id)
-        )
-      );
+      const res = await fetch("/api/habits", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          orders: orderedIds.map((id, sort_order) => ({ id, sort_order })),
+        }),
+      });
+      if (!res.ok) {
+        const body = (await res.json().catch(() => ({}))) as { error?: string };
+        throw new Error(body.error ?? "Reorder failed");
+      }
       await refresh();
     },
     [demoMode, refresh]
   );
 
-  const cleanCompletions = useCallback(async () => {
-    if (demoMode) {
-      setDemo((prev) => {
-        const base = prev ?? loadDemoState();
-        const next = clearDemoCompletions(base);
-        setCompletions(next.completions);
-        return next;
+  const cleanCompletions = useCallback(
+    async (pin?: string) => {
+      if (demoMode) {
+        setDemo((prev) => {
+          const base = prev ?? loadDemoState();
+          const next = clearDemoCompletions(base);
+          setCompletions(next.completions);
+          return next;
+        });
+        return;
+      }
+
+      const res = await fetch("/api/completions", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ pin: pin ?? "willy1" }),
       });
-      return;
-    }
-
-    const supabase = createClient();
-    if (!supabase || !currentUserId) return;
-
-    const ids = completions.map((c) => c.id);
-    if (ids.length === 0) return;
-    await supabase.from("completions").delete().in("id", ids);
-    await refresh();
-  }, [demoMode, currentUserId, completions, refresh]);
+      if (!res.ok) {
+        const body = (await res.json().catch(() => ({}))) as { error?: string };
+        throw new Error(body.error ?? "Clean failed");
+      }
+      await refresh();
+    },
+    [demoMode, refresh]
+  );
 
   return {
     ready,
     demoMode,
+    sharedMode,
     currentUser,
     partner,
     profiles,

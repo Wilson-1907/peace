@@ -8,7 +8,7 @@ import { CLEAN_ACTION_PIN, verifyCleanPin } from "@/lib/auth-session";
 interface CleanModalProps {
   open: boolean;
   onClose: () => void;
-  onConfirm: () => void;
+  onConfirm: (pin: string) => void | Promise<void>;
 }
 
 /**
@@ -17,19 +17,27 @@ interface CleanModalProps {
 export function CleanModal({ open, onClose, onConfirm }: CleanModalProps) {
   const [pin, setPin] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
 
   if (!open) return null;
 
-  function submit(e: FormEvent) {
+  async function submit(e: FormEvent) {
     e.preventDefault();
     setError(null);
     if (!verifyCleanPin(pin)) {
       setError("Wrong PIN. Enter willy1 (Wilson) to clean.");
       return;
     }
-    onConfirm();
-    setPin("");
-    onClose();
+    setBusy(true);
+    try {
+      await onConfirm(pin);
+      setPin("");
+      onClose();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Clean failed");
+    } finally {
+      setBusy(false);
+    }
   }
 
   return (
@@ -109,9 +117,10 @@ export function CleanModal({ open, onClose, onConfirm }: CleanModalProps) {
           </button>
           <button
             type="submit"
-            className="flex-1 rounded-xl bg-rose-600 py-2.5 text-sm font-semibold text-white hover:bg-rose-700"
+            disabled={busy}
+            className="flex-1 rounded-xl bg-rose-600 py-2.5 text-sm font-semibold text-white hover:bg-rose-700 disabled:opacity-50"
           >
-            Clean now
+            {busy ? "Cleaning…" : "Clean now"}
           </button>
         </div>
       </form>

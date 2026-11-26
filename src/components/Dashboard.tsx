@@ -310,8 +310,8 @@ export function Dashboard() {
         <CleanModal
           open={cleanOpen}
           onClose={() => setCleanOpen(false)}
-          onConfirm={() => {
-            void data.cleanCompletions();
+          onConfirm={async (pin) => {
+            await data.cleanCompletions(pin);
           }}
         />
 
