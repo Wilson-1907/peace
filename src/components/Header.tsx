@@ -5,20 +5,26 @@ import { format } from "date-fns";
 
 interface HeaderProps {
   demoMode: boolean;
-  monthLabel: string;
+  weekLabel: string;
+  weekMeta: string;
+  canPrev: boolean;
+  canNext: boolean;
   signedInAs?: string;
-  onPrevMonth: () => void;
-  onNextMonth: () => void;
+  onPrevWeek: () => void;
+  onNextWeek: () => void;
   onManageHabits: () => void;
   onSignOut?: () => void;
 }
 
 export function Header({
   demoMode,
-  monthLabel,
+  weekLabel,
+  weekMeta,
+  canPrev,
+  canNext,
   signedInAs,
-  onPrevMonth,
-  onNextMonth,
+  onPrevWeek,
+  onNextWeek,
   onManageHabits,
   onSignOut,
 }: HeaderProps) {
@@ -55,7 +61,7 @@ export function Header({
                 Peace &amp; Wilson
               </p>
               <p className="text-sm text-blue-100/90">
-                Daily tracking system · {format(new Date(), "EEEE, MMM d")}
+                Daily tracking · {format(new Date(), "EEEE, d MMMM yyyy")}
                 {signedInAs ? ` · ${signedInAs}` : ""}
               </p>
             </div>
@@ -85,20 +91,25 @@ export function Header({
           <div className="flex items-center gap-2 rounded-xl bg-white/90 p-1 shadow-sm backdrop-blur">
             <button
               type="button"
-              onClick={onPrevMonth}
-              className="rounded-lg px-3 py-1.5 text-sm font-medium text-blue-800 hover:bg-blue-50"
-              aria-label="Previous month"
+              onClick={onPrevWeek}
+              disabled={!canPrev}
+              className="rounded-lg px-3 py-1.5 text-sm font-medium text-blue-800 hover:bg-blue-50 disabled:opacity-40"
+              aria-label="Previous week"
             >
               ←
             </button>
-            <span className="min-w-[9rem] text-center text-sm font-semibold text-blue-950">
-              {monthLabel}
-            </span>
+            <div className="min-w-[12rem] px-2 text-center">
+              <p className="text-sm font-semibold text-blue-950">{weekLabel}</p>
+              <p className="text-[10px] font-medium uppercase tracking-wide text-blue-400">
+                {weekMeta}
+              </p>
+            </div>
             <button
               type="button"
-              onClick={onNextMonth}
-              className="rounded-lg px-3 py-1.5 text-sm font-medium text-blue-800 hover:bg-blue-50"
-              aria-label="Next month"
+              onClick={onNextWeek}
+              disabled={!canNext}
+              className="rounded-lg px-3 py-1.5 text-sm font-medium text-blue-800 hover:bg-blue-50 disabled:opacity-40"
+              aria-label="Next week"
             >
               →
             </button>
@@ -106,7 +117,7 @@ export function Header({
 
           {demoMode && (
             <span className="rounded-full bg-white/90 px-3 py-1 text-xs font-medium text-blue-900">
-              Free mode · saved on this device
+              Saved on this device · weeks through Dec {new Date().getFullYear()}
             </span>
           )}
         </div>

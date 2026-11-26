@@ -51,10 +51,10 @@ export function TodayTrack({
             Today&apos;s tracking
           </p>
           <p className="font-display text-lg font-semibold text-blue-950">
-            {format(today, "EEEE, MMM d")}
+            {format(today, "EEEE, d MMMM yyyy")}
           </p>
           <p className="text-xs text-slate-500">
-            Mark only today — tomorrow unlocks tomorrow.
+            Mark only today — the rest of the week waits · saved when done
           </p>
         </div>
         <div className="text-right">

@@ -17,6 +17,7 @@ interface UserPaneProps {
   profile: Profile;
   photo: string;
   photoPosition?: string;
+  weekLabel: string;
   habits: Habit[];
   completions: Completion[];
   days: Date[];
@@ -33,6 +34,7 @@ export function UserPane({
   profile,
   photo,
   photoPosition = "center",
+  weekLabel,
   habits,
   completions,
   days,
@@ -112,7 +114,7 @@ export function UserPane({
 
       <div className="border-b border-blue-50 px-3 pt-3">
         <p className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-blue-400">
-          Month history · today only is editable
+          Week · {weekLabel} · today only editable · past saved
         </p>
       </div>
 

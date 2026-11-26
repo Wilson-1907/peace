@@ -131,6 +131,15 @@ export function computeMonthScores(
   );
 }
 
+export function computeScoresForDays(
+  habits: Habit[],
+  completions: Completion[],
+  userId: string,
+  days: Date[]
+): DayScore[] {
+  return days.map((day) => computeDayScore(habits, completions, userId, day));
+}
+
 export function computeWeeklyInsight(
   scores: DayScore[],
   reference: Date = new Date()
